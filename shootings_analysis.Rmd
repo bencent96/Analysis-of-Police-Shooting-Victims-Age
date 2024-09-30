@@ -1,0 +1,134 @@
+---
+title: "Analysis of Police Shooting Victims' Age"
+author: "Benjamin Ekow Attabra"
+date: "September 2024"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+# Introduction
+
+This analysis aims to explore whether there are significant differences in the ages of police shooting victims, based on race and general demographics. We will address two research questions:
+
+1. Is the average age of victims significantly different from 40 years old?
+2. Is the average age of minority victims different from non-minority victims?
+
+The data used for this analysis comes from the `shootings.csv` file, which records police shootings in America.
+
+# Question 1: Is the average age of victims significantly different from 40?
+
+A recent census study indicates that the average age of Americans is 40 years old. We will conduct a hypothesis test at the α = 0.05 significance level to determine whether the average age of victims is significantly different from 40.
+
+## Hypothesis
+
+- **Null hypothesis (H₀):** The mean age of victims is 40.
+  \[
+  H_0: \mu = 40
+  \]
+- **Alternative hypothesis (H₁):** The mean age of victims is not 40.
+  \[
+  H_1: \mu \neq 40
+  \]
+
+## Data Preparation and Summary
+
+We load the dataset and compute descriptive statistics for the age of victims.
+
+```{r setup, message=FALSE, warning=FALSE}
+# Load necessary libraries
+library(dplyr)
+library(readr)
+
+# Read the dataset
+file_path <- "shootings.csv"
+shootings_data <- read_csv(file_path)
+
+# Filter age data and remove NA values
+age_data <- na.omit(shootings_data$age)
+
+# Summary statistics for age
+summary(age_data)
+
+# Question 1
+# Step 1: Calculate sample statistics
+sample_mean <- mean(age_data)
+sample_sd <- sd(age_data)
+n <- length(age_data)
+
+# Hypothesized mean (population mean)
+mu_0 <- 40
+
+# Step 2: Compute the t-statistic
+t_statistic <- (sample_mean - mu_0) / (sample_sd / sqrt(n))
+
+# Step 3: Critical value for two-tailed test at alpha = 0.05
+alpha <- 0.05
+t_critical <- qt(1 - alpha/2, df = n-1)
+
+# Step 4: Compute the p-value
+p_value <- 2 * pt(-abs(t_statistic), df = n-1)
+
+# Display results
+cat("Sample Mean:", sample_mean, "\n")
+cat("Sample Standard Deviation:", sample_sd, "\n")
+cat("Sample Size:", n, "\n")
+cat("T-statistic:", t_statistic, "\n")
+cat("Critical Value (t_critical):", t_critical, "\n")
+cat("P-value:", p_value, "\n")
+
+# Decision
+if (abs(t_statistic) > t_critical) {
+  cat("Reject the null hypothesis: The mean age is significantly different from 40.\n")
+} else {
+  cat("Fail to reject the null hypothesis: No significant difference from 40.\n")
+}
+
+# Question 2
+# Step 1: Separate minority and non-minority victims (assuming 'White' is non-minority)
+minority_data <- shootings_data %>% filter(race != "White") %>% pull(age)
+non_minority_data <- shootings_data %>% filter(race == "White") %>% pull(age)
+
+# Remove missing values
+minority_data <- na.omit(minority_data)
+non_minority_data <- na.omit(non_minority_data)
+
+# Summary statistics for each group
+cat("Minority Group - Mean Age:", mean(minority_data), "\n")
+cat("Non-Minority Group - Mean Age:", mean(non_minority_data), "\n")
+
+# Step 2: Calculate sample sizes, means, and standard deviations
+n1 <- length(minority_data)
+n2 <- length(non_minority_data)
+
+mean_minority <- mean(minority_data)
+mean_non_minority <- mean(non_minority_data)
+
+sd_minority <- sd(minority_data)
+sd_non_minority <- sd(non_minority_data)
+
+# Step 3: Calculate the pooled standard deviation
+sp <- sqrt(((n1 - 1) * sd_minority^2 + (n2 - 1) * sd_non_minority^2) / (n1 + n2 - 2))
+
+# Step 4: Calculate the t-statistic
+t_statistic <- (mean_minority - mean_non_minority) / (sp * sqrt(1/n1 + 1/n2))
+
+# Step 5: Determine the critical value for a two-tailed test at alpha = 0.01
+alpha <- 0.01
+df <- n1 + n2 - 2
+t_critical <- qt(1 - alpha/2, df)
+
+# Step 6: Compute the p-value
+p_value <- 2 * pt(-abs(t_statistic), df)
+
+# Display results
+cat("T-statistic:", t_statistic, "\n")
+cat("Critical Value (t_critical):", t_critical, "\n")
+cat("P-value:", p_value, "\n")
+
+# Decision
+if (abs(t_statistic) > t_critical) {
+  cat("Reject the null hypothesis: Significant difference between minority and non-minority victims' ages.\n")
+} else {
+  cat("Fail to reject the null hypothesis: No significant difference between the two groups.\n")
+}
